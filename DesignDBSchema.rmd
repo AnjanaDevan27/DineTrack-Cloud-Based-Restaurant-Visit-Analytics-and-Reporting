@@ -1,0 +1,136 @@
+---
+title: "Design of Normalized Database Schema"
+author: "Deivasigamani, Anjana"
+output: pdf_document
+---
+
+Design Normalized Database
+
+## 1. Functional Dependencies Before and After Normalization
+
+### 1.1 Functional Dependencies Before Normalization
+
+The dataset represents restaurant visits and contains various attributes related to the visit, restaurant, server, and customer information. Below are the functional dependencies before normalization:
+
+```{r functional_deps_before, echo=FALSE, results='asis'}
+library(knitr)
+library(kableExtra)
+
+df_before <- data.frame(
+  Determinant = c("VisitID", "Restaurant", "ServerEmpID", "CustomerName", "PaymentMethod"),
+  Dependent_Attributes = c(
+    "VisitDate, VisitTime, MealType, PartySize, WaitTime, FoodBill, TipAmount, DiscountApplied, PaymentMethod, OrderedAlcohol, AlcoholBill, Restaurant, ServerEmpID, CustomerName",
+    "ServerEmpID, ServerName, StartDateHired, EndDateHired, HourlyRate, ServerBirthDate, ServerTIN",
+    "ServerName, StartDateHired, EndDateHired, HourlyRate, ServerBirthDate, ServerTIN",
+    "CustomerPhone, CustomerMail, LoyaltyMember, Gender",
+    "DiscountApplied"
+  )
+)
+
+kable(df_before, caption = "Functional Dependencies Before Normalization", booktabs = TRUE, escape = FALSE) %>%
+  kable_styling(latex_options = c("hold_position", "striped"), full_width = FALSE) %>%
+  column_spec(2, width = "10cm")
+```
+
+### 1.2 Functional Dependencies After Normalization
+
+After normalizing the database to 3NF, the functional dependencies are:
+
+```{r functional_deps_after, echo=FALSE, results='asis'}
+df_after <- data.frame(
+  Determinant = c("VisitID", "RestaurantID", "ServerEmpID", "CustomerID", "PaymentID"),
+  Dependent_Attributes = c(
+    "VisitDate, VisitTime, MealType, PartySize, WaitTime, FoodBill, TipAmount, DiscountApplied, PaymentID, OrderedAlcohol, AlcoholBill, RestaurantID, ServerEmpID, CustomerID",
+    "RestaurantName",
+    "ServerName, StartDateHired, EndDateHired, HourlyRate, ServerBirthDate, ServerTIN",
+    "CustomerName, CustomerPhone, CustomerMail, LoyaltyMember",
+    "PaymentMethod, DiscountApplied"
+  )
+)
+
+kable(df_after, caption = "Functional Dependencies After Normalization", booktabs = TRUE, escape = FALSE) %>%
+  kable_styling(latex_options = c("hold_position", "striped"), full_width = FALSE) %>%
+  column_spec(2, width = "10cm")
+```
+## 2. Normalization Process: From 1NF to 3NF
+
+## 2.1 First Normal Form (1NF)
+
+To achieve **1NF**, the following changes were made:
+
+- Removed duplicate and multi-valued attributes.
+
+- Ensured atomicity by breaking down non-atomic values.
+
+- Added primary keys where missing.
+
+- Renamed `Restaurant` column to `RestaurantName` for clarity.
+
+- Assigned appropriate data types (e.g., `WaitTime` changed to `INT`, `VisitTime` changed to `TIME`).
+
+## 2.2 Second Normal Form (2NF)
+
+To achieve **2NF**, the following changes were made:
+
+- **Eliminated partial dependencies**:
+  
+    - `RestaurantName` was dependent on `RestaurantID`, so a **Restaurant** table was created.
+
+    - **Customer details** were moved into the **Customer** table.
+
+## 2.3 Third Normal Form (3NF)
+
+To achieve **3NF**, the following changes were made:
+
+- **Removed transitive dependencies**:
+
+    - `PaymentMethod` was moved to a **Payment** table.
+
+    - **Server details** were moved to a separate **Server** table.
+
+## 2.4 Normalized Tables in 3NF
+
+```{r normalization_tables, echo=FALSE}
+df_tables <- list(
+  "Restaurant Table" = data.frame(
+    Column.Name = c("RestaurantID (PK)", "RestaurantName"),
+    Data.Type = c("INT", "VARCHAR(255)"),
+    Constraints = c("PRIMARY KEY, AUTO_INCREMENT", "UNIQUE, NOT NULL")
+  ),
+
+  "Customer Table" = data.frame(
+    Column.Name = c("CustomerID (PK)", "CustomerName", "CustomerPhone", "CustomerMail", "LoyaltyMember"),
+    Data.Type = c("INT", "VARCHAR(255)", "VARCHAR(20)", "VARCHAR(255)", "TINYINT(1)"),
+    Constraints = c("PRIMARY KEY, AUTO_INCREMENT", "NOT NULL", "DEFAULT NULL", "DEFAULT NULL", "DEFAULT NULL")
+  ),
+
+  "Server Table" = data.frame(
+    Column.Name = c("ServerEmpID (PK)", "ServerName", "StartDateHired", "EndDateHired", "HourlyRate", "ServerBirthDate", "ServerTIN"),
+    Data.Type = c("INT", "VARCHAR(255)", "DATE", "DATE", "DECIMAL(5,2)", "DATE", "VARCHAR(20)"),
+    Constraints = c("PRIMARY KEY, AUTO_INCREMENT", "NOT NULL", "DEFAULT NULL", "DEFAULT NULL", "DEFAULT 0.00", "DEFAULT NULL", "UNIQUE, DEFAULT NULL")
+  ),
+
+  "Visit Table" = data.frame(
+    Column.Name = c("VisitID (PK)", "CustomerID (FK)", "RestaurantID (FK)", "ServerEmpID (FK)", "PaymentID (FK)", "VisitDate", "VisitTime", "MealType", "PartySize", "WaitTime", "FoodBill", "TipAmount", "OrderedAlcohol", "AlcoholBill"),
+    Data.Type = c("INT", "INT", "INT", "INT", "INT", "DATE", "TIME", "VARCHAR(50)", "INT", "INT", "DECIMAL(10,2)", "DECIMAL(10,2)", "TINYINT(1)", "DECIMAL(10,2)"),
+    Constraints = c("PRIMARY KEY, AUTO_INCREMENT", "REFERENCES Customer ON DELETE SET NULL", "REFERENCES Restaurant ON DELETE CASCADE", "REFERENCES Server ON DELETE SET NULL", "REFERENCES Payment ON DELETE SET NULL", "NOT NULL", "DEFAULT NULL", "NOT NULL", "NOT NULL", "DEFAULT NULL", "NOT NULL", "DEFAULT 0.00", "DEFAULT 0", "DEFAULT 0.00")
+  ),
+
+  "Payment Table" = data.frame(
+    Column.Name = c("PaymentID (PK)", "PaymentMethod", "DiscountApplied"),
+    Data.Type = c("INT", "VARCHAR(50)", "DECIMAL(5,2)"),
+    Constraints = c("PRIMARY KEY, AUTO_INCREMENT", "UNIQUE, NOT NULL", "DEFAULT 0.00")
+  )
+)
+
+for (table_name in names(df_tables)) {
+  cat("\n###", table_name, "\n")
+  print(kable(df_tables[[table_name]]))
+}
+```
+
+## 3. Entity-Relationship Diagram (ERD)
+
+```{r erd_image, echo=FALSE, out.width='100%', fig.align='center'}
+knitr::include_graphics("ERD_Restaurant_Visits.png")
+```
