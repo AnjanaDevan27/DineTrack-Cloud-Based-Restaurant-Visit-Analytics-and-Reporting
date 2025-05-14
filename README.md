@@ -76,18 +76,18 @@ The relational schema is normalized to **3NF** and includes:
 ---
 
 ## Project File Structure
-
-📂 DineTrack/
-├── designDBSchema.PractI.DeivasigamaniA.pdf       # Database schema documentation
-├── createDB.PractI.DeivasigamaniA.R               # Create schema and tables
-├── loadDB.PractI.DeivasigamaniA.R                 # Load data into MySQL (GCP)
-├── configBusinessLogic.PractI.DeivasigamaniA.R    # Configure stored procedures
-├── testDBLoading.PractI.DeivasigamaniA.R          # Validate data integrity
-├── deleteDB.PractI.DeivasigamaniA.R               # Drop all tables (reset)
-├── RevenueReport.PractI.DeivasigamaniA.Rmd        # RMarkdown report template
-├── RevenueReport.PractI.DeivasigamaniA.pdf        # Final analytics report
-└── README.md                                       # Project documentation
-
+```
+DineTrack/
+├── designDBSchema.pdf       # Database schema documentation
+├── createDB.R               # Create schema and tables
+├── loadDB.R                 # Load data into MySQL (GCP)
+├── configBusinessLogic.R    # Configure stored procedures
+├── testDBLoading.R          # Validate data integrity
+├── deleteDB.R               # Drop all tables (reset)
+├── RevenueReport.Rmd        # RMarkdown report template
+├── RevenueReport.pdf        # Final analytics report
+└── README.md                # Project documentation
+```
 ---
 
 
