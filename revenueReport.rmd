@@ -1,0 +1,83 @@
+---
+title: "Analyze Sales"
+author: "Deivasigamani, Anjana"
+output: "pdf_document"
+---
+
+```{r setup, include=FALSE}
+suppressWarnings(suppressMessages(library(DBI)))
+suppressWarnings(suppressMessages(library(RMySQL)))
+suppressWarnings(suppressMessages(library(knitr)))
+suppressWarnings(suppressMessages(library(dplyr)))
+suppressWarnings(suppressMessages(library(kableExtra)))
+suppressWarnings(suppressMessages(library(lubridate)))
+
+```
+
+
+```{r db_connection, echo=FALSE}
+# Database Connection
+dbCon <- dbConnect(
+  RMySQL::MySQL(),
+  dbname = "restaurant_db",
+  host = "35.193.167.112",
+  user = "rstudio_user",
+  password = "user123"
+)
+```
+
+## Analysis by Restaurant
+
+```{r restaurant_analysis, echo=FALSE}
+query_restaurant <- "
+SELECT r.RestaurantName,
+       COUNT(v.VisitID) AS TotalVisits,
+       COUNT(DISTINCT v.CustomerID) AS UniqueCustomers,
+       SUM(CASE WHEN c.LoyaltyMember = 1 THEN 1 ELSE 0 END) AS LoyaltyCustomers,
+       SUM(v.FoodBill) AS TotalFoodRevenue,
+       SUM(v.AlcoholBill) AS TotalAlcoholRevenue
+FROM Visit v
+JOIN Restaurant r ON v.RestaurantID = r.RestaurantID
+LEFT JOIN Customer c ON v.CustomerID = c.CustomerID
+GROUP BY r.RestaurantName
+ORDER BY TotalVisits DESC;"
+
+suppressWarnings(suppressMessages({
+restaurant_analysis <- dbGetQuery(dbCon, query_restaurant)
+}))
+kable(restaurant_analysis) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+```
+
+## Analysis by Year
+
+```{r analysis_by_year, echo=FALSE}
+query_year <- "
+SELECT YEAR(VisitDate) AS Year,
+       SUM(FoodBill + AlcoholBill) AS TotalRevenue,
+       AVG(FoodBill + AlcoholBill) AS AvgPerPartySpent,
+       AVG(PartySize) AS AvgPartySize
+FROM Visit
+GROUP BY Year
+ORDER BY Year;"
+
+
+suppressWarnings(suppressMessages({
+year_analysis <- dbGetQuery(dbCon, query_year)
+}))
+kable(year_analysis) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+```
+
+## Trend by Year
+
+```{r trend_by_year, echo=FALSE}
+# Minimalistic Revenue Trend Plot
+plot(year_analysis$Year, year_analysis$TotalRevenue, type = "o", col = "black", lwd = 2,
+     xlab = "Year", ylab = "Total Revenue ($)",
+     main = "Revenue Trend by Year", pch = 16, cex = 1.2)
+grid(col = "gray")
+```
+
+```{r db_disconnection, echo=FALSE}
+invisible(dbDisconnect(dbCon))
